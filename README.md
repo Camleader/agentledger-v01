@@ -26,6 +26,20 @@ Core workflow:
 
 Log → Trace → Flag risk → Explain → Approve → Export
 
+## Event Validation
+
+AgentLedger validates event structure before writing logs. Required fields such as `agent_name`, `event_type`, and `tool_name` are checked to prevent incomplete audit records.
+
+Validation currently checks that:
+
+- `event_type` is one of the supported event types: `event`, `decision`, or `tool_call`
+- `agent_name` is a non-empty string
+- `input_data` is a dictionary
+- `output_data` is a dictionary
+- `reason_codes` is a list
+- `metadata` is a dictionary
+- `tool_name` is required for tool call events
+
 ## Current Demo
 
 AgentLedger v0.1.4 includes a local HELOC underwriting agent demo.

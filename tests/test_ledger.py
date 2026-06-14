@@ -49,3 +49,16 @@ def test_log_tool_call_adds_tool_name(tmp_path):
 
     assert event["event_type"] == "tool_call"
     assert event["metadata"]["tool_name"] == "search_api"
+
+# We will add tests that prove that bad data is rejected 
+# v0.2.2 should test: 
+# Empty agent_name fails
+# Invalid event_type fails
+# input_data must be a dictionary
+# output_data must be a dictionary
+# reason_codes must be a list
+# metadata must be a dictionary
+# tool_name is required for tool calls
+# Valid decision still works
+# Valid tool call still works
+# This tep is important because it proves the SDK is becoming more reliable. 

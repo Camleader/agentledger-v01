@@ -1,40 +1,7 @@
 from datetime import datetime, timezone
 from uuid import uuid4
 
-
-class AgentLedger:
-    """In-memory audit ledger for local AgentLedger demos."""
-
-    def __init__(self):
-        self.events = []
-
-    def log_event(self, step, action, input_data, output_data, risk_level="low"):
-        event = {
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-            "event_id": str(uuid4()),
-            "step": step,
-            "action": action,
-            "input": input_data,
-            "output": output_data,
-            "risk_level": risk_level,
-        }
-        self.events.append(event)
-        return event
-
-    def get_trace(self):
-        return list(self.events)
-
-    def get_audit_record(self):
-        return {
-            "ledger_version": "v0.1.4",
-            "generated_at": datetime.now(timezone.utc).isoformat(),
-            "event_count": len(self.events),
-            "trace": self.get_trace(),
-        }
-        #v0.2.1 Added the SDK Core Class 
-    from datetime import datetime, timezone
-from uuid import uuid4
-
+from .events import validate_event
 from .storage import JsonlStorage
 
 
@@ -51,15 +18,29 @@ class AgentLedger:
         reason_codes=None,
         metadata=None,
     ):
+        input_data = input_data or {}
+        output_data = output_data or {}
+        reason_codes = reason_codes or []
+        metadata = metadata or {}
+
+        validate_event(
+            event_type=event_type,
+            agent_name=agent_name,
+            input_data=input_data,
+            output_data=output_data,
+            reason_codes=reason_codes,
+            metadata=metadata,
+        )
+
         event = {
             "event_id": str(uuid4()),
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "event_type": event_type,
             "agent_name": agent_name,
-            "input_data": input_data or {},
-            "output_data": output_data or {},
-            "reason_codes": reason_codes or [],
-            "metadata": metadata or {},
+            "input_data": input_data,
+            "output_data": output_data,
+            "reason_codes": reason_codes,
+            "metadata": metadata,
         }
 
         self.storage.write(event)
@@ -90,6 +71,9 @@ class AgentLedger:
         output_data=None,
         metadata=None,
     ):
+        if not isinstance(tool_name, str) or not tool_name.strip():
+            raise ValueError("tool_name is required and must be a non-empty string.")
+
         return self.log_event(
             event_type="tool_call",
             agent_name=agent_name,
