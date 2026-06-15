@@ -52,7 +52,7 @@ def test_log_tool_call_adds_tool_name(tmp_path):
 
 # We will add tests that prove that bad data is rejected 
 # v0.2.2 should test: 
-# Empty agent_name fails
+# Empty agent_name fails 
 # Invalid event_type fails
 # input_data must be a dictionary
 # output_data must be a dictionary

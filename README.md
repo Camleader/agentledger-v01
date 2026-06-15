@@ -28,9 +28,7 @@ Log → Trace → Flag risk → Explain → Approve → Export
 
 ## Event Validation
 
-AgentLedger validates event structure before writing logs. Required fields such as `agent_name`, `event_type`, and `tool_name` are checked to prevent incomplete audit records.
-
-Validation currently checks that:
+AgentLedger validates event structure before writing logs. Required fields such as `agent_name`, `event_type`, and `tool_name` are checked to prevent incomplete audit records. Validation currently checks that:
 
 - `event_type` is one of the supported event types: `event`, `decision`, or `tool_call`
 - `agent_name` is a non-empty string
