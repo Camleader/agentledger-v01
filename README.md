@@ -18,6 +18,10 @@ Developers and companies need a way to answer:
 - Was there human approval?
 - Can the record be exported for review?
 
+## Quickstart
+
+AgentLedger is a lightweight Python SDK for logging AI agent decisions, tool calls, inputs, outputs, reason codes, and metadata into a structured audit trail.
+
 ## Solution
 
 AgentLedger creates structured audit records for AI agent decisions.

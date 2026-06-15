@@ -1,4 +1,8 @@
-# Making the package Importable v0.2.1 STEP 6
+#Lets SDK Developers Know What Version they are using
+
 from .ledger import AgentLedger
 
-__all__ = ["AgentLedger"]
+__version__ = "0.2.3"
+
+__all__ = ["AgentLedger", "__version__"]
+

@@ -1,9 +1,17 @@
 # Add the First Test v0.2.1 STEP 10
 
 import json
-from pathlib import Path
 
+import pytest
+
+import agentledger
 from agentledger import AgentLedger
+
+def test_package_exposes_version():
+    assert agentledger.__version__ == "0.2.3"
+
+def test_package_imports_agentledger_class():
+    assert AgentLedger is not None
 
 
 def test_log_decision_creates_event(tmp_path):
