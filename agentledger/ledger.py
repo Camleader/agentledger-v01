@@ -1,7 +1,11 @@
 from datetime import datetime, timezone
 from uuid import uuid4
 
-from .events import validate_event
+from .events import (
+    ALLOWED_EVENT_TYPES,
+    validate_event,
+    validate_non_empty_string,
+)
 from .storage import JsonlStorage
 
 
@@ -85,3 +89,30 @@ class AgentLedger:
                 "tool_name": tool_name,
             },
         )
+
+    def list_events(self):
+        return self.storage.read_all()
+
+    def get_events_by_type(self, event_type):
+        validate_non_empty_string(event_type, "event_type")
+
+        if event_type not in ALLOWED_EVENT_TYPES:
+            allowed_types = ", ".join(sorted(ALLOWED_EVENT_TYPES))
+            raise ValueError(f"event_type must be one of: {allowed_types}.")
+
+        return [
+            event
+            for event in self.list_events()
+            if event["event_type"] == event_type
+        ]
+
+    def get_events_by_agent(self, agent_name):
+        validate_non_empty_string(agent_name, "agent_name")
+
+        return [
+            event
+            for event in self.list_events()
+            if event["agent_name"] == agent_name
+        ]
+    
+    

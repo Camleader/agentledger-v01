@@ -42,6 +42,19 @@ AgentLedger validates event structure before writing logs. Required fields such 
 - `metadata` is a dictionary
 - `tool_name` is required for tool call events
 
+## Querying Events
+
+AgentLedger can read previously logged events from its JSONL audit file.
+
+```python
+from agentledger import AgentLedger
+
+ledger = AgentLedger()
+
+all_events = ledger.list_events()
+decision_events = ledger.get_events_by_type("decision")
+underwriting_events = ledger.get_events_by_agent("UnderwritingAgent")
+
 ## Current Demo
 
 AgentLedger v0.1.4 includes a local HELOC underwriting agent demo.
@@ -82,6 +95,14 @@ The JSON audit export includes:
 - Human review status
 - Trace events
 - Compliance note
+
+## Run Examples
+
+```bash
+PYTHONPATH=. python3 examples/basic_usage.py
+PYTHONPATH=. python3 examples/underwriting_agent.py
+PYTHONPATH=. python3 examples/tool_call_demo.py
+PYTHONPATH=. python3 examples/query_events.py
 
 ## Target User
 
