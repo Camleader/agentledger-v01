@@ -1,8 +1,12 @@
-# Add Package Configuration v0.2.1 STEP 8
+# Add Package Configuration v0.2.4 STEP 8
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "agentledger"
-version = "0.2.1"
+version = "0.2.4"
 description = "A lightweight audit ledger SDK for AI agents."
 readme = "README.md"
 requires-python = ">=3.9"
@@ -11,6 +15,6 @@ authors = [
 ]
 dependencies = []
 
-[build-system]
-requires = ["setuptools>=61.0"]
-build-backend = "setuptools.build_meta"
+[tool.setuptools.packages.find]
+include = ["agentledger*"]
+exclude = ["screenshots*"]

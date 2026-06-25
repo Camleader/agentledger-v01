@@ -5,3 +5,9 @@ __pycache__/
 .pytest_cache/
 .streamlit/
 .env
+# v0.2.5 Adding Generated Export Filkes - Purpose if for these to be ignored 
+
+agentledger_logs.jsonl
+audit_events.json
+audit_events.csv
+underwriting_audit_report.md

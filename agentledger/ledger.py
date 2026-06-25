@@ -108,6 +108,7 @@ class AgentLedger:
 
     def get_events_by_agent(self, agent_name):
         validate_non_empty_string(agent_name, "agent_name")
+    
 
         return [
             event
@@ -115,4 +116,14 @@ class AgentLedger:
             if event["agent_name"] == agent_name
         ]
     
-    
+    def export_json(self, path, events=None):
+        events_to_export = events if events is not None else self.list_events()
+        return self.storage.export_json(events_to_export, path)
+
+    def export_csv(self, path, events=None):
+        events_to_export = events if events is not None else self.list_events()
+        return self.storage.export_csv(events_to_export, path)
+
+    def export_markdown_report(self, path, events=None):
+        events_to_export = events if events is not None else self.list_events()
+        return self.storage.export_markdown_report(events_to_export, path)

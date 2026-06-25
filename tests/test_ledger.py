@@ -8,7 +8,7 @@ import agentledger
 from agentledger import AgentLedger
 
 def test_package_exposes_version():
-    assert agentledger.__version__ == "0.2.4"
+    assert agentledger.__version__ == "0.2.5"
 
 def test_package_imports_agentledger_class():
     assert AgentLedger is not None
@@ -163,3 +163,96 @@ def test_get_events_by_agent_rejects_empty_agent_name(tmp_path):
 
     with pytest.raises(ValueError, match="agent_name is required"):
         ledger.get_events_by_agent("")
+# v0.2.4 version tests 
+def test_export_json_creates_export_file(tmp_path):
+    log_path = tmp_path / "test_logs.jsonl"
+    export_path = tmp_path / "audit_events.json"
+    ledger = AgentLedger(storage_path=str(log_path))
+
+    ledger.log_decision(
+        agent_name="UnderwritingAgent",
+        input_data={"credit_score": 710},
+        output_data={"decision": "approve"},
+    )
+
+    result_path = ledger.export_json(str(export_path))
+
+    assert result_path == export_path
+    assert export_path.exists()
+
+    exported_events = json.loads(export_path.read_text())
+    assert len(exported_events) == 1
+    assert exported_events[0]["event_type"] == "decision"
+
+
+def test_export_csv_creates_export_file(tmp_path):
+    log_path = tmp_path / "test_logs.jsonl"
+    export_path = tmp_path / "audit_events.csv"
+    ledger = AgentLedger(storage_path=str(log_path))
+
+    ledger.log_tool_call(
+        agent_name="ResearchAgent",
+        tool_name="web_search",
+        input_data={"query": "AI governance"},
+        output_data={"status": "completed"},
+    )
+
+    result_path = ledger.export_csv(str(export_path))
+
+    assert result_path == export_path
+    assert export_path.exists()
+
+    csv_contents = export_path.read_text()
+    assert "event_type" in csv_contents
+    assert "tool_call" in csv_contents
+    assert "ResearchAgent" in csv_contents
+
+
+def test_export_markdown_report_creates_export_file(tmp_path):
+    log_path = tmp_path / "test_logs.jsonl"
+    export_path = tmp_path / "audit_report.md"
+    ledger = AgentLedger(storage_path=str(log_path))
+
+    ledger.log_decision(
+        agent_name="UnderwritingAgent",
+        input_data={"credit_score": 710},
+        output_data={"decision": "manual_review"},
+        reason_codes=["CLTV_ABOVE_POLICY_LIMIT"],
+    )
+
+    result_path = ledger.export_markdown_report(str(export_path))
+
+    assert result_path == export_path
+    assert export_path.exists()
+
+    report_contents = export_path.read_text()
+    assert "# AgentLedger Audit Report" in report_contents
+    assert "UnderwritingAgent" in report_contents
+    assert "CLTV_ABOVE_POLICY_LIMIT" in report_contents
+
+
+def test_export_can_use_filtered_events(tmp_path):
+    log_path = tmp_path / "test_logs.jsonl"
+    export_path = tmp_path / "decision_events.json"
+    ledger = AgentLedger(storage_path=str(log_path))
+
+    ledger.log_decision(
+        agent_name="UnderwritingAgent",
+        input_data={"credit_score": 710},
+        output_data={"decision": "approve"},
+    )
+
+    ledger.log_tool_call(
+        agent_name="UnderwritingAgent",
+        tool_name="income_verification_api",
+        input_data={"borrower_id": "demo_001"},
+        output_data={"status": "verified"},
+    )
+
+    decision_events = ledger.get_events_by_type("decision")
+    ledger.export_json(str(export_path), events=decision_events)
+
+    exported_events = json.loads(export_path.read_text())
+
+    assert len(exported_events) == 1
+    assert exported_events[0]["event_type"] == "decision"
