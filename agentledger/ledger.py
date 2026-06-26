@@ -5,6 +5,7 @@ from .events import (
     ALLOWED_EVENT_TYPES,
     validate_event,
     validate_non_empty_string,
+    validate_trace_id,
 )
 from .storage import JsonlStorage
 
@@ -12,6 +13,9 @@ from .storage import JsonlStorage
 class AgentLedger:
     def __init__(self, storage_path="agentledger_logs.jsonl"):
         self.storage = JsonlStorage(storage_path)
+
+    def start_trace(self):
+        return str(uuid4())
 
     def log_event(
         self,
@@ -21,11 +25,14 @@ class AgentLedger:
         output_data=None,
         reason_codes=None,
         metadata=None,
+        trace_id=None,
     ):
         input_data = input_data or {}
         output_data = output_data or {}
         reason_codes = reason_codes or []
         metadata = metadata or {}
+        trace_id = trace_id or self.start_trace()
+        validate_trace_id(trace_id) 
 
         validate_event(
             event_type=event_type,
@@ -34,10 +41,12 @@ class AgentLedger:
             output_data=output_data,
             reason_codes=reason_codes,
             metadata=metadata,
+            trace_id=trace_id,
         )
 
         event = {
             "event_id": str(uuid4()),
+            "trace_id": trace_id,
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "event_type": event_type,
             "agent_name": agent_name,
@@ -57,6 +66,7 @@ class AgentLedger:
         output_data=None,
         reason_codes=None,
         metadata=None,
+        trace_id=None,
     ):
         return self.log_event(
             event_type="decision",
@@ -65,6 +75,7 @@ class AgentLedger:
             output_data=output_data,
             reason_codes=reason_codes,
             metadata=metadata,
+            trace_id=trace_id,
         )
 
     def log_tool_call(
@@ -74,6 +85,7 @@ class AgentLedger:
         input_data=None,
         output_data=None,
         metadata=None,
+        trace_id=None,
     ):
         if not isinstance(tool_name, str) or not tool_name.strip():
             raise ValueError("tool_name is required and must be a non-empty string.")
@@ -88,6 +100,7 @@ class AgentLedger:
                 **(metadata or {}),
                 "tool_name": tool_name,
             },
+            trace_id=trace_id,
         )
 
     def list_events(self):
@@ -108,12 +121,20 @@ class AgentLedger:
 
     def get_events_by_agent(self, agent_name):
         validate_non_empty_string(agent_name, "agent_name")
-    
 
         return [
             event
             for event in self.list_events()
             if event["agent_name"] == agent_name
+        ]
+    
+    def get_events_by_trace(self, trace_id):
+        validate_trace_id(trace_id)
+
+        return [
+            event
+            for event in self.list_events()
+            if event.get("trace_id") == trace_id
         ]
     
     def export_json(self, path, events=None):

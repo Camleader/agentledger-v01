@@ -8,7 +8,7 @@ import agentledger
 from agentledger import AgentLedger
 
 def test_package_exposes_version():
-    assert agentledger.__version__ == "0.2.5"
+    assert agentledger.__version__ == "0.2.6"
 
 def test_package_imports_agentledger_class():
     assert AgentLedger is not None
@@ -256,3 +256,80 @@ def test_export_can_use_filtered_events(tmp_path):
 
     assert len(exported_events) == 1
     assert exported_events[0]["event_type"] == "decision"
+
+# v0.2.6 version tests
+def test_start_trace_returns_non_empty_string(tmp_path):
+    log_path = tmp_path / "test_logs.jsonl"
+    ledger = AgentLedger(storage_path=str(log_path))
+
+    trace_id = ledger.start_trace()
+
+    assert isinstance(trace_id, str)
+    assert trace_id
+
+
+def test_events_can_share_same_trace_id(tmp_path):
+    log_path = tmp_path / "test_logs.jsonl"
+    ledger = AgentLedger(storage_path=str(log_path))
+    trace_id = ledger.start_trace()
+
+    decision_event = ledger.log_decision(
+        agent_name="UnderwritingAgent",
+        input_data={"credit_score": 710},
+        output_data={"decision": "manual_review"},
+        trace_id=trace_id,
+    )
+
+    tool_event = ledger.log_tool_call(
+        agent_name="UnderwritingAgent",
+        tool_name="income_verification_api",
+        input_data={"borrower_id": "demo_001"},
+        output_data={"status": "verified"},
+        trace_id=trace_id,
+    )
+
+    assert decision_event["trace_id"] == trace_id
+    assert tool_event["trace_id"] == trace_id
+
+
+def test_get_events_by_trace_returns_related_events(tmp_path):
+    log_path = tmp_path / "test_logs.jsonl"
+    ledger = AgentLedger(storage_path=str(log_path))
+
+    first_trace_id = ledger.start_trace()
+    second_trace_id = ledger.start_trace()
+
+    ledger.log_decision(
+        agent_name="UnderwritingAgent",
+        input_data={"credit_score": 710},
+        output_data={"decision": "approve"},
+        trace_id=first_trace_id,
+    )
+
+    ledger.log_tool_call(
+        agent_name="UnderwritingAgent",
+        tool_name="income_verification_api",
+        input_data={"borrower_id": "demo_001"},
+        output_data={"status": "verified"},
+        trace_id=first_trace_id,
+    )
+
+    ledger.log_decision(
+        agent_name="ResearchAgent",
+        input_data={"query": "AI compliance"},
+        output_data={"decision": "complete"},
+        trace_id=second_trace_id,
+    )
+
+    related_events = ledger.get_events_by_trace(first_trace_id)
+
+    assert len(related_events) == 2
+    assert all(event["trace_id"] == first_trace_id for event in related_events)
+
+
+def test_get_events_by_trace_rejects_empty_trace_id(tmp_path):
+    log_path = tmp_path / "test_logs.jsonl"
+    ledger = AgentLedger(storage_path=str(log_path))
+
+    with pytest.raises(ValueError, match="trace_id is required"):
+        ledger.get_events_by_trace("")

@@ -1,10 +1,12 @@
-# Validation Logic Step 3 v0.2.2 
+# Validation Logic Step 3 v0.2.6
 
 ALLOWED_EVENT_TYPES = {
     "event",
     "decision",
     "tool_call",
 }
+
+
 def validate_non_empty_string(value, field_name):
     if not isinstance(value, str) or not value.strip():
         raise ValueError(f"{field_name} is required and must be a non-empty string.")
@@ -20,6 +22,10 @@ def validate_list(value, field_name):
         raise ValueError(f"{field_name} must be a list.")
 
 
+def validate_trace_id(trace_id):
+    validate_non_empty_string(trace_id, "trace_id")
+
+
 def validate_event(
     event_type,
     agent_name,
@@ -27,6 +33,7 @@ def validate_event(
     output_data,
     reason_codes,
     metadata,
+    trace_id,
 ):
     validate_non_empty_string(event_type, "event_type")
 
@@ -39,6 +46,10 @@ def validate_event(
     validate_dict(output_data, "output_data")
     validate_list(reason_codes, "reason_codes")
     validate_dict(metadata, "metadata")
+    validate_trace_id(trace_id)
+
+
+
 
 # This keeps the SDK controlled 
 

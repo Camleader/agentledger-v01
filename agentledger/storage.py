@@ -43,6 +43,7 @@ class JsonlStorage:
 
         fieldnames = [
             "event_id",
+            "trace_id",
             "timestamp",
             "event_type",
             "agent_name",
@@ -60,6 +61,7 @@ class JsonlStorage:
                 writer.writerow(
                     {
                         "event_id": event.get("event_id", ""),
+                        "trace_id": event.get("trace_id", ""),
                         "timestamp": event.get("timestamp", ""),
                         "event_type": event.get("event_type", ""),
                         "agent_name": event.get("agent_name", ""),
@@ -91,6 +93,7 @@ class JsonlStorage:
                     f"- **Timestamp:** {event.get('timestamp', '')}",
                     f"- **Event Type:** {event.get('event_type', '')}",
                     f"- **Agent Name:** {event.get('agent_name', '')}",
+                    f"- **Trace ID:** {event.get('trace_id', '')}",
                     f"- **Input Data:** `{json.dumps(event.get('input_data', {}))}`",
                     f"- **Output Data:** `{json.dumps(event.get('output_data', {}))}`",
                     f"- **Reason Codes:** `{json.dumps(event.get('reason_codes', []))}`",

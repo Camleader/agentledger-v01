@@ -74,6 +74,31 @@ ledger.export_markdown_report(
     events=decision_events,
 )
 
+## Tracing Agent Workflows
+
+AgentLedger can connect multiple events from the same AI-agent workflow using a shared `trace_id`.
+
+```python
+from agentledger import AgentLedger
+
+ledger = AgentLedger()
+
+trace_id = ledger.start_trace()
+
+ledger.log_tool_call(
+    agent_name="UnderwritingAgent",
+    tool_name="income_verification_api",
+    trace_id=trace_id,
+)
+
+ledger.log_decision(
+    agent_name="UnderwritingAgent",
+    output_data={"decision": "manual_review"},
+    trace_id=trace_id,
+)
+
+workflow_events = ledger.get_events_by_trace(trace_id)
+
 ## Current Demo
 
 AgentLedger v0.1.4 includes a local HELOC underwriting agent demo.
@@ -123,6 +148,7 @@ PYTHONPATH=. python3 examples/underwriting_agent.py
 PYTHONPATH=. python3 examples/tool_call_demo.py
 PYTHONPATH=. python3 examples/query_events.py
 PYTHONPATH=. python3 examples/export_events.py
+PYTHONPATH=. python3 examples/trace_workflow.py
 
 ## Target User
 
