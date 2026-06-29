@@ -29,6 +29,11 @@ class JsonlStorage:
                 events.append(json.loads(line))
 
         return events
+    
+    def replace_all(self, records):
+       with self.path.open("w", encoding="utf-8") as file:
+            for record in records:
+             file.write(json.dumps(record) + "\n")
 
     def export_json(self, events, path):
         export_path = Path(path)

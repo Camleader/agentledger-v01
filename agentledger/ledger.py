@@ -3,6 +3,7 @@ from uuid import uuid4
 
 from .events import (
     ALLOWED_EVENT_TYPES,
+    validate_dict,
     validate_event,
     validate_non_empty_string,
     validate_trace_id,
@@ -11,11 +12,88 @@ from .storage import JsonlStorage
 
 
 class AgentLedger:
-    def __init__(self, storage_path="agentledger_logs.jsonl"):
+    def __init__(
+        self,
+        storage_path="agentledger_logs.jsonl",
+        trace_storage_path="agentledger_traces.jsonl",
+    ):
         self.storage = JsonlStorage(storage_path)
+        self.trace_storage = JsonlStorage(trace_storage_path)
 
     def start_trace(self):
         return str(uuid4())
+
+    def create_trace(
+        self,
+        workflow,
+        agent_name,
+        entity_id=None,
+        metadata=None,
+    ):
+        validate_non_empty_string(workflow, "workflow")
+        validate_non_empty_string(agent_name, "agent_name")
+
+        if entity_id is not None:
+            validate_non_empty_string(entity_id, "entity_id")
+
+        metadata = metadata or {}
+        validate_dict(metadata, "metadata")
+
+        trace = {
+            "trace_id": str(uuid4()),
+            "workflow": workflow,
+            "agent_name": agent_name,
+            "entity_id": entity_id,
+            "metadata": metadata,
+            "status": "active",
+            "outcome": None,
+            "approval_status": "not_required",
+            "started_at": datetime.now(timezone.utc).isoformat(),
+            "completed_at": None,
+        }
+
+        self.trace_storage.write(trace)
+        return trace
+
+    def get_trace(self, trace_id):
+        validate_trace_id(trace_id)
+
+        for trace in self.trace_storage.read_all():
+            if trace.get("trace_id") == trace_id:
+                return {
+                    "trace": trace,
+                    "events": self.get_events_by_trace(trace_id),
+                }
+
+        raise ValueError(f"Trace not found: {trace_id}")
+
+    def complete_trace(
+        self,
+        trace_id,
+        outcome,
+        approval_status="not_required",
+    ):
+        validate_trace_id(trace_id)
+        validate_non_empty_string(outcome, "outcome")
+        validate_non_empty_string(approval_status, "approval_status")
+
+        traces = self.trace_storage.read_all()
+        completed_trace = None
+
+        for trace in traces:
+            if trace.get("trace_id") == trace_id:
+                trace["status"] = "completed"
+                trace["outcome"] = outcome
+                trace["approval_status"] = approval_status
+                trace["completed_at"] = datetime.now(timezone.utc).isoformat()
+                completed_trace = trace
+                break
+
+        if completed_trace is None:
+            raise ValueError(f"Trace not found: {trace_id}")
+
+        self.trace_storage.replace_all(traces)
+        return completed_trace
 
     def log_event(
         self,
@@ -32,7 +110,7 @@ class AgentLedger:
         reason_codes = reason_codes or []
         metadata = metadata or {}
         trace_id = trace_id or self.start_trace()
-        validate_trace_id(trace_id) 
+        validate_trace_id(trace_id)
 
         validate_event(
             event_type=event_type,
@@ -127,7 +205,7 @@ class AgentLedger:
             for event in self.list_events()
             if event["agent_name"] == agent_name
         ]
-    
+
     def get_events_by_trace(self, trace_id):
         validate_trace_id(trace_id)
 
@@ -136,7 +214,7 @@ class AgentLedger:
             for event in self.list_events()
             if event.get("trace_id") == trace_id
         ]
-    
+
     def export_json(self, path, events=None):
         events_to_export = events if events is not None else self.list_events()
         return self.storage.export_json(events_to_export, path)
