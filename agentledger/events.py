@@ -5,7 +5,26 @@ ALLOWED_EVENT_TYPES = {
     "decision",
     "tool_call",
 }
+ALLOWED_RISK_LEVELS = {
+    "low",
+    "medium",
+    "high",
+    "critical",
+}
 
+ALLOWED_POLICY_STATUSES = {
+    "pass",
+    "warning",
+    "fail",
+    "not_evaluated",
+}
+
+ALLOWED_APPROVAL_STATUSES = {
+    "not_required",
+    "pending",
+    "approved",
+    "rejected",
+}
 
 def validate_non_empty_string(value, field_name):
     if not isinstance(value, str) or not value.strip():
@@ -20,6 +39,23 @@ def validate_dict(value, field_name):
 def validate_list(value, field_name):
     if not isinstance(value, list):
         raise ValueError(f"{field_name} must be a list.")
+    
+def validate_boolean(value, field_name):
+    if not isinstance(value, bool):
+        raise ValueError(f"{field_name} must be a boolean.")
+
+
+def validate_optional_string(value, field_name):
+    if value is not None:
+        validate_non_empty_string(value, field_name)
+
+
+def validate_allowed_value(value, field_name, allowed_values):
+    validate_non_empty_string(value, field_name)
+
+    if value not in allowed_values:
+        allowed = ", ".join(sorted(allowed_values))
+        raise ValueError(f"{field_name} must be one of: {allowed}.")
 
 
 def validate_trace_id(trace_id):

@@ -2,10 +2,16 @@ from datetime import datetime, timezone
 from uuid import uuid4
 
 from .events import (
+    ALLOWED_APPROVAL_STATUSES,
+    ALLOWED_POLICY_STATUSES,
+    ALLOWED_RISK_LEVELS,
     ALLOWED_EVENT_TYPES,
+    validate_allowed_value,
+    validate_boolean,
     validate_dict,
     validate_event,
     validate_non_empty_string,
+    validate_optional_string,
     validate_trace_id,
 )
 from .storage import JsonlStorage
@@ -95,6 +101,7 @@ class AgentLedger:
         self.trace_storage.replace_all(traces)
         return completed_trace
 
+# Preserves the existing generic event logger while giving decisions events the new audit-review fields
     def log_event(
         self,
         event_type,
@@ -145,7 +152,52 @@ class AgentLedger:
         reason_codes=None,
         metadata=None,
         trace_id=None,
+        risk_level="low",
+        review_required=False,
+        review_reason=None,
+        policy_status="not_evaluated",
+        approval_status="not_required",
     ):
+        validate_allowed_value(
+            risk_level,
+            "risk_level",
+            ALLOWED_RISK_LEVELS,
+        )
+        validate_boolean(review_required, "review_required")
+        validate_optional_string(review_reason, "review_reason")
+        validate_allowed_value(
+            policy_status,
+            "policy_status",
+            ALLOWED_POLICY_STATUSES,
+        )
+        validate_allowed_value(
+            approval_status,
+            "approval_status",
+            ALLOWED_APPROVAL_STATUSES,
+        )
+
+        event = self.log_event(
+            event_type="decision",
+            agent_name=agent_name,
+            input_data=input_data,
+            output_data=output_data,
+            reason_codes=reason_codes,
+            metadata=metadata,
+            trace_id=trace_id,
+        )
+
+        event["risk_level"] = risk_level
+        event["review_required"] = review_required
+        event["review_reason"] = review_reason
+        event["policy_status"] = policy_status
+        event["approval_status"] = approval_status
+
+        events = self.storage.read_all()
+        events[-1] = event
+        self.storage.replace_all(events)
+
+        return event
+    
         return self.log_event(
             event_type="decision",
             agent_name=agent_name,
