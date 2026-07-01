@@ -73,6 +73,54 @@ class AgentLedger:
 
         raise ValueError(f"Trace not found: {trace_id}")
 
+
+    def export_trace(self, trace_id):
+        trace_record = self.get_trace(trace_id)
+        trace = trace_record["trace"]
+        events = trace_record["events"]
+
+        decision_events = [
+            event for event in events
+            if event.get("event_type") == "decision"
+        ]
+
+        tool_call_events = [
+            event for event in events
+            if event.get("event_type") == "tool_call"
+        ]
+
+        risk_priority = {
+            "low": 0,
+            "medium": 1,
+            "high": 2,
+            "critical": 3,
+        }
+
+        highest_risk_level = "low"
+        review_required = False
+
+        for event in decision_events:
+            risk_level = event.get("risk_level", "low")
+
+            if risk_priority.get(risk_level, 0) > risk_priority[highest_risk_level]:
+                highest_risk_level = risk_level
+
+            if event.get("review_required", False):
+                review_required = True
+
+        return {
+            "export_type": "AgentLedger Trace Audit Record",
+            "trace": trace,
+            "events": events,
+            "summary": {
+                "event_count": len(events),
+                "tool_call_count": len(tool_call_events),
+                "decision_count": len(decision_events),
+                "review_required": review_required,
+                "highest_risk_level": highest_risk_level,
+            },
+        }
+
     def complete_trace(
         self,
         trace_id,
