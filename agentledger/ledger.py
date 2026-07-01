@@ -129,7 +129,11 @@ class AgentLedger:
     ):
         validate_trace_id(trace_id)
         validate_non_empty_string(outcome, "outcome")
-        validate_non_empty_string(approval_status, "approval_status")
+        validate_allowed_value(
+            approval_status,
+            "approval_status",
+            ALLOWED_APPROVAL_STATUSES,
+        )
 
         traces = self.trace_storage.read_all()
         completed_trace = None
