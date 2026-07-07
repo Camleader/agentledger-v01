@@ -22,6 +22,30 @@ AgentLedger is framework-agnostic. It can be used with custom Python agents, Ope
 
 ## Install
 
+After cloning the repository, move into the AgentLedger project folder:
+
+```bash
+cd agentledger-v01
+```
+
+Confirm you are in the correct directory:
+
+```bash
+ls
+```
+
+You should see files and folders similar to:
+
+```text
+README.md
+pyproject.toml
+agentledger
+tests
+```
+
+Only after confirming that `pyproject.toml` is present should you create and activate the virtual environment.
+
+
 Create and activate a virtual environment:
 
 ```bash
