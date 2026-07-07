@@ -61,8 +61,8 @@ def test_export_audit_json_is_valid_json():
     parsed = json.loads(export_audit_json(audit_record))
 
     assert parsed["export_type"] == "AgentLedger Audit Record"
-    assert parsed["product_version"] == "v0.1.4"
-    assert parsed["product"]["version"] == "v0.1.4"
+    assert parsed["product_version"] == "v0.3.0"    
+    assert parsed["product"]["version"] == "v0.3.0"
     assert parsed["run"]["run_id"] == "demo-run-123"
     assert parsed["decision"]["recommendation"] == "Approve"
     assert parsed["trace"]["event_count"] == 0

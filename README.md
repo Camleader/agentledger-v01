@@ -1,169 +1,26 @@
 # AgentLedger
 
-AgentLedger is an audit and approval layer for AI agents operating in regulated workflows.
+**AgentLedger is a lightweight Python SDK for creating traceable, reviewable, and exportable audit records for AI-agent workflows.**
 
-Prove what your AI agent did.
+It helps developers answer:
 
-## Problem
+* What did the agent do?
+* Which tools did it call?
+* What decision did it make?
+* What risks or policy signals were recorded?
+* Was human review required?
+* What was the final outcome?
+* Can the full workflow be exported for later review?
 
-AI agents are beginning to take actions and make recommendations in workflows where trust, compliance, and accountability matter.
+## Core Workflow
 
-Developers and companies need a way to answer:
+```text
+Log → Trace → Flag Risk → Review → Approve → Export
+```
 
-- What did the agent do?
-- What inputs did it use?
-- What decision did it make?
-- What risks were flagged?
-- Why did it make that decision?
-- Was there human approval?
-- Can the record be exported for review?
+AgentLedger is framework-agnostic. It can be used with custom Python agents, OpenAI workflows, LangChain, CrewAI, AutoGen, or other agent systems because it records structured workflow events instead of depending on a specific model provider.
 
-## Quickstart
-
-AgentLedger is a lightweight Python SDK for logging AI agent decisions, tool calls, inputs, outputs, reason codes, and metadata into a structured audit trail.
-
-## Solution
-
-AgentLedger creates structured audit records for AI agent decisions.
-
-Core workflow:
-
-Log → Trace → Flag risk → Explain → Approve → Export
-
-## Event Validation
-
-AgentLedger validates event structure before writing logs. Required fields such as `agent_name`, `event_type`, and `tool_name` are checked to prevent incomplete audit records. Validation currently checks that:
-
-- `event_type` is one of the supported event types: `event`, `decision`, or `tool_call`
-- `agent_name` is a non-empty string
-- `input_data` is a dictionary
-- `output_data` is a dictionary
-- `reason_codes` is a list
-- `metadata` is a dictionary
-- `tool_name` is required for tool call events
-
-## Querying Events
-
-AgentLedger can read previously logged events from its JSONL audit file.
-
-```python
-from agentledger import AgentLedger
-
-ledger = AgentLedger()
-
-all_events = ledger.list_events()
-decision_events = ledger.get_events_by_type("decision")
-underwriting_events = ledger.get_events_by_agent("UnderwritingAgent")
-
-## Exporting Events
-
-AgentLedger can export audit events into JSON, CSV, and Markdown reports.
-
-```python
-from agentledger import AgentLedger
-
-ledger = AgentLedger()
-
-ledger.export_json("audit_events.json")
-ledger.export_csv("audit_events.csv")
-
-decision_events = ledger.get_events_by_type("decision")
-
-ledger.export_markdown_report(
-    "decision_audit_report.md",
-    events=decision_events,
-)
-
-## Tracing Agent Workflows
-
-AgentLedger can connect multiple events from the same AI-agent workflow using a shared `trace_id`.
-
-```python
-from agentledger import AgentLedger
-
-ledger = AgentLedger()
-
-trace_id = ledger.start_trace()
-
-ledger.log_tool_call(
-    agent_name="UnderwritingAgent",
-    tool_name="income_verification_api",
-    trace_id=trace_id,
-)
-
-ledger.log_decision(
-    agent_name="UnderwritingAgent",
-    output_data={"decision": "manual_review"},
-    trace_id=trace_id,
-)
-
-workflow_events = ledger.get_events_by_trace(trace_id)
-
-## Current Demo
-
-AgentLedger v0.1.4 includes a local HELOC underwriting agent demo.
-
-The demo:
-
-- Accepts borrower application data
-- Runs a simulated HELOC underwriting agent
-- Calculates CLTV and DTI
-- Produces an approval, manual review, or decline recommendation
-- Generates reason codes
-- Flags risk
-- Captures human review status
-- Exports a structured JSON audit record
-
-## Demo Presets
-
-The app includes three borrower scenarios:
-
-- Approve Demo
-- Manual Review Demo
-- Decline Demo
-
-These allow quick live demonstrations without manually entering data.
-
-## Audit Export
-
-The JSON audit export includes:
-
-- Product metadata
-- Agent run metadata
-- Borrower application data
-- Decision summary
-- Calculations
-- Reason codes
-- Risk flags
-- Highest risk severity
-- Human review status
-- Trace events
-- Compliance note
-
-## Run Examples
-
-```bash
-PYTHONPATH=. python3 examples/basic_usage.py
-PYTHONPATH=. python3 examples/underwriting_agent.py
-PYTHONPATH=. python3 examples/tool_call_demo.py
-PYTHONPATH=. python3 examples/query_events.py
-PYTHONPATH=. python3 examples/export_events.py
-PYTHONPATH=. python3 examples/trace_workflow.py
-
-## Target User
-
-AI developers building agents that operate in regulated, sensitive, or high-accountability workflows.
-
-## First Buyer
-
-AI startups selling into fintech and regulated enterprise customers.
-
-## Pricing Concept
-
-- Pro: $49/month
-- Team: $299/month
-
-## How to Run Locally
+## Install
 
 Create and activate a virtual environment:
 
@@ -172,59 +29,223 @@ python3 -m venv .venv
 source .venv/bin/activate
 ```
 
-Install dependencies:
+Install the package locally:
 
 ```bash
-pip install -r requirements.txt
+pip install -e .
 ```
 
-Run the app:
+Run the test suite:
 
 ```bash
-streamlit run app.py
+pytest -q
 ```
 
-Run tests:
+## Quickstart
+
+```python
+from agentledger import AgentLedger
+
+ledger = AgentLedger()
+
+trace = ledger.create_trace(
+    workflow="example_workflow",
+    agent_name="ExampleAgent",
+    entity_id="example_001",
+    metadata={"environment": "demo"},
+)
+
+ledger.log_decision(
+    agent_name="ExampleAgent",
+    input_data={"request": "evaluate example workflow"},
+    output_data={"decision": "approve"},
+    reason_codes=["MEETS_EXAMPLE_CRITERIA"],
+    trace_id=trace["trace_id"],
+    risk_level="low",
+    review_required=False,
+    policy_status="pass",
+    approval_status="approved",
+)
+
+ledger.complete_trace(
+    trace_id=trace["trace_id"],
+    outcome="approved",
+    approval_status="approved",
+)
+
+audit_record = ledger.export_trace(trace["trace_id"])
+
+print(audit_record["summary"])
+```
+
+Run the included quickstart:
 
 ```bash
-pytest
+python3 -m examples.quickstart
+```
+
+## Underwriting Audit Demo
+
+The underwriting demo shows an AI-agent workflow that:
+
+1. Creates a trace for a loan application.
+2. Logs income-verification and credit-report tool calls.
+3. Records a manual-review decision.
+4. Captures risk, policy, and approval data.
+5. Completes the trace.
+6. Exports a complete audit record.
+
+Run it with:
+
+```bash
+python3 -m examples.underwriting_audit_demo
+```
+
+## Core API
+
+### Create a trace
+
+```python
+trace = ledger.create_trace(
+    workflow="heloc_underwriting",
+    agent_name="UnderwritingAgent",
+    entity_id="application_123",
+    metadata={"environment": "demo"},
+)
+```
+
+### Log a tool call
+
+```python
+ledger.log_tool_call(
+    agent_name="UnderwritingAgent",
+    tool_name="income_verification_api",
+    input_data={"application_id": "application_123"},
+    output_data={"status": "partial"},
+    trace_id=trace["trace_id"],
+)
+```
+
+### Log a decision with review controls
+
+```python
+ledger.log_decision(
+    agent_name="UnderwritingAgent",
+    output_data={"decision": "manual_review"},
+    reason_codes=["INCOME_DOCUMENTATION_INCOMPLETE"],
+    trace_id=trace["trace_id"],
+    risk_level="high",
+    review_required=True,
+    review_reason="Income documentation is incomplete.",
+    policy_status="warning",
+    approval_status="pending",
+)
+```
+
+Allowed values:
+
+```text
+risk_level:
+low, medium, high, critical
+
+policy_status:
+pass, warning, fail, not_evaluated
+
+approval_status:
+not_required, pending, approved, rejected
+```
+
+### Complete and export a trace
+
+```python
+ledger.complete_trace(
+    trace_id=trace["trace_id"],
+    outcome="manual_review_required",
+    approval_status="pending",
+)
+
+trace_record = ledger.get_trace(trace["trace_id"])
+audit_record = ledger.export_trace(trace["trace_id"])
+```
+
+`export_trace()` returns:
+
+```text
+Trace metadata
++ ordered workflow events
++ final outcome and approval status
++ event counts
++ review-required signal
++ highest risk level
+```
+
+## Legacy Event Queries and Exports
+
+```python
+all_events = ledger.list_events()
+decision_events = ledger.get_events_by_type("decision")
+agent_events = ledger.get_events_by_agent("UnderwritingAgent")
+trace_events = ledger.get_events_by_trace(trace["trace_id"])
+
+ledger.export_json("audit_events.json")
+ledger.export_csv("audit_events.csv")
+ledger.export_markdown_report("audit_report.md")
 ```
 
 ## Project Structure
 
 ```text
-app.py
 agentledger/
+    ledger.py
+    events.py
+    storage.py
+
+examples/
+    quickstart.py
+    underwriting_audit_demo.py
+
 tests/
 README.md
-requirements.txt
-screenshots/
+pyproject.toml
 ```
 
-## Version History
+## Current Scope
 
-v0.1.0 - Core local HELOC agent demo
-v0.1.1 - UI and run summary polish
-v0.1.2 - Demo presets
-v0.1.3 - Structured audit export polish
-v0.1.4 - GitHub-ready README and demo presentation polish
+AgentLedger v0.3.0 is a local SDK MVP for structured AI-agent accountability records.
+
+Included:
+
+* Local JSONL event storage
+* Persistent trace records
+* Tool-call and decision logging
+* Risk, review, policy, and approval fields
+* Trace lifecycle management
+* JSON-compatible audit exports
+* Runnable examples
+* Automated tests
+
+Not included yet:
+
+* Hosted storage
+* Authentication
+* Multi-tenant accounts
+* Dashboard UI
+* Team review queues
+* Retention controls
+* Compliance certifications
+* Legal or regulatory guarantees
 
 ## Roadmap
 
-v0.2 - Developer SDK
-v0.3 - Hosted dashboard
-v0.4 - Team workspaces and paid beta
-v0.5 - Agent integration templates
+```text
+v0.3.0 — Trace, risk, review, approval, and audit-export SDK MVP
+v0.3.x — Developer-experience improvements and feedback-driven releases
+v0.4.0 — Integrations and stronger storage options
+v0.5.0 — Team review workflow and initial UI direction
+v1.0.0 — Stable public API validated by real customer usage
+```
 
 ## Status
 
-Local prototype.
-Not production-ready.
-No external APIs.
-No authentication.
-No database.
-No legal/compliance guarantee.
+MVP SDK. Local-first. Not production-ready.
 
-## Founder Note
-
-AgentLedger is being built as a founder-led prototype to explore how AI agent activity can be made traceable, reviewable, and exportable for regulated workflows.

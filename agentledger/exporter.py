@@ -1,7 +1,7 @@
 import json
 
 
-PRODUCT_VERSION = "v0.1.4"
+PRODUCT_VERSION = "v0.3.0"
 
 
 def build_audit_record(

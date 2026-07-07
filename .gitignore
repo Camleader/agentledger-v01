@@ -11,3 +11,8 @@ agentledger_logs.jsonl
 audit_events.json
 audit_events.csv
 underwriting_audit_report.mddemo_output/
+demo_output/
+dist/
+build/
+agentledger.egg-info/
+underwriting_audit_report.md

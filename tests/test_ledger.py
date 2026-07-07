@@ -8,7 +8,7 @@ import agentledger
 from agentledger import AgentLedger
 
 def test_package_exposes_version():
-    assert agentledger.__version__ == "0.2.6"
+    assert agentledger.__version__ == "0.3.0"
 
 def test_package_imports_agentledger_class():
     assert AgentLedger is not None
