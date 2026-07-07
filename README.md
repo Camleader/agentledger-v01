@@ -22,6 +22,11 @@ AgentLedger is framework-agnostic. It can be used with custom Python agents, Ope
 
 ## Install
 
+Clone the repository and move into the project directory:
+
+git clone https://github.com/Camleader/agentledger-v01.git
+cd agentledger-v01
+
 After cloning the repository, move into the AgentLedger project folder:
 
 ```bash
