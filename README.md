@@ -130,6 +130,14 @@ Run it with:
 python3 -m examples.underwriting_audit_demo
 ```
 
+## Demo
+
+Watch the end-to-end AgentLedger walkthrough:
+
+[▶ Watch the AgentLedger underwriting audit demo](https://youtu.be/-O0T16owdZU)
+
+This demo shows how to clone the repository, install the SDK, run an underwriting workflow, and generate an exportable audit record.
+
 ## Core API
 
 ### Create a trace
