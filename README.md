@@ -317,8 +317,6 @@ Not included yet:
 
 ## Roadmap
 
-## Roadmap
-
 ```text
 v0.3.0 — Trace, risk, review, approval, and audit-export SDK MVP
 v0.3.1 — Evidence, attribution, action status, and tamper-evident integrity checks
