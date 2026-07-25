@@ -163,13 +163,29 @@ class AgentLedger:
         reason_codes=None,
         metadata=None,
         trace_id=None,
+        action_status="executed",
+        agent_id=None,
+        agent_version=None,
+        model_version=None,
+        prompt_version=None,
+        workflow_version=None,
+        policy_version=None,
     ):
+        
+    
         input_data = input_data or {}
         output_data = output_data or {}
         reason_codes = reason_codes or []
         metadata = metadata or {}
         trace_id = trace_id or self.start_trace()
         validate_trace_id(trace_id)
+
+        validate_optional_string(agent_id, "agent_id")
+        validate_optional_string(agent_version, "agent_version")
+        validate_optional_string(model_version, "model_version")
+        validate_optional_string(prompt_version, "prompt_version")
+        validate_optional_string(workflow_version, "workflow_version")
+        validate_optional_string(policy_version, "policy_version")
 
         validate_event(
             event_type=event_type,
@@ -179,6 +195,7 @@ class AgentLedger:
             reason_codes=reason_codes,
             metadata=metadata,
             trace_id=trace_id,
+            action_status=action_status,
         )
 
         event = {
@@ -191,7 +208,17 @@ class AgentLedger:
             "output_data": output_data,
             "reason_codes": reason_codes,
             "metadata": metadata,
+            "action_status": action_status,
+            "agent_id": agent_id,
+            "agent_version": agent_version,
+            "model_version": model_version,
+            "prompt_version": prompt_version,
+            "workflow_version": workflow_version,
+            "policy_version": policy_version,
         }
+
+        event["prev_hash"] = self.storage.get_last_hash()
+        event["sha256"] = self.storage.compute_hash(event)
 
         self.storage.write(event)
         return event
@@ -209,6 +236,13 @@ class AgentLedger:
         review_reason=None,
         policy_status="not_evaluated",
         approval_status="not_required",
+        action_status="executed",
+        agent_id=None,
+        agent_version=None,
+        model_version=None,
+        prompt_version=None,
+        workflow_version=None,
+        policy_version=None,
     ):
         validate_allowed_value(
             risk_level,
@@ -236,6 +270,13 @@ class AgentLedger:
             reason_codes=reason_codes,
             metadata=metadata,
             trace_id=trace_id,
+            action_status=action_status,
+            agent_id=agent_id,
+            agent_version=agent_version,
+            model_version=model_version,
+            prompt_version=prompt_version,
+            workflow_version=workflow_version,
+            policy_version=policy_version,
         )
 
         event["risk_level"] = risk_level
@@ -249,16 +290,6 @@ class AgentLedger:
         self.storage.replace_all(events)
 
         return event
-    
-        return self.log_event(
-            event_type="decision",
-            agent_name=agent_name,
-            input_data=input_data,
-            output_data=output_data,
-            reason_codes=reason_codes,
-            metadata=metadata,
-            trace_id=trace_id,
-        )
 
     def log_tool_call(
         self,
@@ -268,6 +299,13 @@ class AgentLedger:
         output_data=None,
         metadata=None,
         trace_id=None,
+        action_status="executed",
+        agent_id=None,
+        agent_version=None,
+        model_version=None,
+        prompt_version=None,
+        workflow_version=None,
+        policy_version=None,
     ):
         if not isinstance(tool_name, str) or not tool_name.strip():
             raise ValueError("tool_name is required and must be a non-empty string.")
@@ -283,10 +321,60 @@ class AgentLedger:
                 "tool_name": tool_name,
             },
             trace_id=trace_id,
+            action_status=action_status,
+            agent_id=agent_id,
+            agent_version=agent_version,
+            model_version=model_version,
+            prompt_version=prompt_version,
+            workflow_version=workflow_version,
+            policy_version=policy_version,
         )
+
+    def log_action(
+        self,
+        agent_name,
+        action_name,
+        input_data=None,
+        output_data=None,
+        reason_codes=None,
+        metadata=None,
+        trace_id=None,
+        action_status="executed",
+        agent_id=None,
+        agent_version=None,
+        model_version=None,
+        prompt_version=None,
+        workflow_version=None,
+        policy_version=None,
+    ):
+        validate_non_empty_string(action_name, "action_name")
+
+        return self.log_event(
+            event_type="action",
+            agent_name=agent_name,
+            input_data=input_data,
+            output_data=output_data,
+            reason_codes=reason_codes,
+            metadata={
+                **(metadata or {}),
+                "action_name": action_name,
+            },
+            trace_id=trace_id,
+            action_status=action_status,
+            agent_id=agent_id,
+            agent_version=agent_version,
+            model_version=model_version,
+            prompt_version=prompt_version,
+            workflow_version=workflow_version,
+            policy_version=policy_version,
+        )
+
 
     def list_events(self):
         return self.storage.read_all()
+    
+    def verify_hash_chain(self):
+        return self.storage.verify_hash_chain()
 
     def get_events_by_type(self, event_type):
         validate_non_empty_string(event_type, "event_type")
@@ -300,6 +388,7 @@ class AgentLedger:
             for event in self.list_events()
             if event["event_type"] == event_type
         ]
+    
 
     def get_events_by_agent(self, agent_name):
         validate_non_empty_string(agent_name, "agent_name")

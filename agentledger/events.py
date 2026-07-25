@@ -4,6 +4,7 @@ ALLOWED_EVENT_TYPES = {
     "event",
     "decision",
     "tool_call",
+    "action",
 }
 ALLOWED_RISK_LEVELS = {
     "low",
@@ -24,6 +25,13 @@ ALLOWED_APPROVAL_STATUSES = {
     "pending",
     "approved",
     "rejected",
+}
+
+ALLOWED_ACTION_STATUSES = {
+    "executed",
+    "denied",
+    "failed",
+    "held_for_review",
 }
 
 def validate_non_empty_string(value, field_name):
@@ -70,7 +78,13 @@ def validate_event(
     reason_codes,
     metadata,
     trace_id,
+    action_status,
 ):
+    validate_allowed_value(
+        action_status,
+        "action_status",
+        ALLOWED_ACTION_STATUSES,
+    )    
     validate_non_empty_string(event_type, "event_type")
 
     if event_type not in ALLOWED_EVENT_TYPES:

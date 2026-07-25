@@ -138,7 +138,37 @@ Watch the end-to-end AgentLedger walkthrough:
 
 This demo shows how to clone the repository, install the SDK, run an underwriting workflow, and generate an exportable audit record.
 
+## v0.3.1 Evidence & Integrity
+
+AgentLedger v0.3.1 adds stronger audit evidence for AI-agent workflows.
+
+New in this release:
+
+* `log_action()` for recording real-world agent actions
+* `action_status` for executed, denied, failed, and held-for-review outcomes
+* Attribution fields for agent, model, prompt, workflow, and policy versions
+* Tamper-evident event records using `prev_hash` and `sha256`
+* Offline log integrity checks with `verify_hash_chain()`
+* Expanded CSV and Markdown audit exports
+
 ## Core API
+
+### Log an action
+
+```python
+ledger.log_action(
+    agent_name="UnderwritingAgent",
+    action_name="request_income_documents",
+    input_data={"application_id": "application_123"},
+    output_data={"status": "requested"},
+    trace_id=trace["trace_id"],
+    action_status="held_for_review",
+    agent_id="agent_001",
+    model_version="gpt-5",
+    prompt_version="underwriting_prompt_v1",
+    workflow_version="heloc_workflow_v1",
+    policy_version="credit_policy_v1",
+)
 
 ### Create a trace
 
@@ -218,16 +248,19 @@ Trace metadata
 
 ## Legacy Event Queries and Exports
 
+## Event Queries, Exports, and Integrity Checks
+
 ```python
 all_events = ledger.list_events()
 decision_events = ledger.get_events_by_type("decision")
 agent_events = ledger.get_events_by_agent("UnderwritingAgent")
 trace_events = ledger.get_events_by_trace(trace["trace_id"])
 
+integrity_result = ledger.verify_hash_chain()
+
 ledger.export_json("audit_events.json")
 ledger.export_csv("audit_events.csv")
 ledger.export_markdown_report("audit_report.md")
-```
 
 ## Project Structure
 
@@ -248,16 +281,26 @@ pyproject.toml
 
 ## Current Scope
 
-AgentLedger v0.3.0 is a local SDK MVP for structured AI-agent accountability records.
+
+And update **Current Scope** to:
+
+```markdown
+## Current Scope
+
+AgentLedger v0.3.1 is a local-first Python SDK for structured AI-agent accountability records.
 
 Included:
 
 * Local JSONL event storage
 * Persistent trace records
-* Tool-call and decision logging
+* Tool-call, decision, and action logging
+* Action status tracking
 * Risk, review, policy, and approval fields
+* Agent, model, prompt, workflow, and policy attribution fields
+* Tamper-evident event hashing
+* Offline hash-chain verification
 * Trace lifecycle management
-* JSON-compatible audit exports
+* JSON, CSV, and Markdown audit exports
 * Runnable examples
 * Automated tests
 
@@ -274,13 +317,15 @@ Not included yet:
 
 ## Roadmap
 
+## Roadmap
+
 ```text
 v0.3.0 — Trace, risk, review, approval, and audit-export SDK MVP
+v0.3.1 — Evidence, attribution, action status, and tamper-evident integrity checks
 v0.3.x — Developer-experience improvements and feedback-driven releases
 v0.4.0 — Integrations and stronger storage options
 v0.5.0 — Team review workflow and initial UI direction
 v1.0.0 — Stable public API validated by real customer usage
-```
 
 ## Status
 

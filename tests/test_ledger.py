@@ -8,7 +8,7 @@ import agentledger
 from agentledger import AgentLedger
 
 def test_package_exposes_version():
-    assert agentledger.__version__ == "0.3.0"
+    assert agentledger.__version__ == "0.3.1"
 
 def test_package_imports_agentledger_class():
     assert AgentLedger is not None
@@ -45,6 +45,32 @@ def test_log_decision_creates_event(tmp_path):
 
 def test_log_tool_call_adds_tool_name(tmp_path):
     log_path = tmp_path / "test_logs.jsonl"
+
+def test_log_event_defaults_action_status_to_executed(tmp_path):
+    log_path = tmp_path / "test_logs.jsonl"
+    ledger = AgentLedger(storage_path=str(log_path))
+
+    event = ledger.log_decision(
+        agent_name="TestAgent",
+        input_data={"value": 1},
+        output_data={"decision": "approve"},
+    )
+
+    assert event["action_status"] == "executed"
+
+
+def test_log_event_rejects_invalid_action_status(tmp_path):
+    log_path = tmp_path / "test_logs.jsonl"
+    ledger = AgentLedger(storage_path=str(log_path))
+
+    with pytest.raises(ValueError, match="action_status must be one of"):
+        ledger.log_event(
+            event_type="tool_call",
+            agent_name="TestAgent",
+            input_data={"query": "test"},
+            output_data={"result": "ok"},
+            action_status="maybe",
+        )
 
     ledger = AgentLedger(storage_path=str(log_path))
 
@@ -333,3 +359,235 @@ def test_get_events_by_trace_rejects_empty_trace_id(tmp_path):
 
     with pytest.raises(ValueError, match="trace_id is required"):
         ledger.get_events_by_trace("")
+        
+@pytest.mark.parametrize(
+    "action_status",
+    [
+        "executed",
+        "denied",
+        "failed",
+        "held_for_review",
+    ],
+)
+def test_log_tool_call_accepts_valid_action_statuses(tmp_path, action_status):
+    log_path = tmp_path / "test_logs.jsonl"
+    ledger = AgentLedger(storage_path=str(log_path))
+
+    event = ledger.log_tool_call(
+        agent_name="TestAgent",
+        tool_name="payment_api",
+        input_data={"amount": 100},
+        output_data={"status": action_status},
+        action_status=action_status,
+    )
+    assert event["action_status"] == action_status
+
+def test_log_action_creates_action_event(tmp_path):
+    log_path = tmp_path / "test_logs.jsonl"
+    ledger = AgentLedger(storage_path=str(log_path))
+
+    event = ledger.log_action(
+        agent_name="TestAgent",
+        action_name="send_email",
+        input_data={"recipient": "user@example.com"},
+        output_data={"status": "sent"},
+        action_status="executed",
+    )
+
+    assert event["event_type"] == "action"
+    assert event["metadata"]["action_name"] == "send_email"
+    assert event["action_status"] == "executed"
+
+def test_log_event_stores_attribution_fields(tmp_path):
+    log_path = tmp_path / "test_logs.jsonl"
+    ledger = AgentLedger(storage_path=str(log_path))
+
+    event = ledger.log_event(
+        event_type="action",
+        agent_name="TestAgent",
+        input_data={"value": 1},
+        output_data={"status": "ok"},
+        agent_id="agent_001",
+        agent_version="0.1.0",
+        model_version="gpt-5",
+        prompt_version="prompt_v1",
+        workflow_version="workflow_v1",
+        policy_version="policy_v1",
+    )
+
+    assert event["agent_id"] == "agent_001"
+    assert event["agent_version"] == "0.1.0"
+    assert event["model_version"] == "gpt-5"
+    assert event["prompt_version"] == "prompt_v1"
+    assert event["workflow_version"] == "workflow_v1"
+    assert event["policy_version"] == "policy_v1"
+
+
+def test_log_event_rejects_empty_attribution_field(tmp_path):
+    log_path = tmp_path / "test_logs.jsonl"
+    ledger = AgentLedger(storage_path=str(log_path))
+
+    with pytest.raises(ValueError, match="agent_id is required"):
+        ledger.log_event(
+            event_type="action",
+            agent_name="TestAgent",
+            agent_id="",
+        )
+def test_log_action_stores_attribution_fields(tmp_path):
+    log_path = tmp_path / "test_logs.jsonl"
+    ledger = AgentLedger(storage_path=str(log_path))
+
+    event = ledger.log_action(
+        agent_name="TestAgent",
+        action_name="send_email",
+        agent_id="agent_001",
+        agent_version="0.1.0",
+        model_version="gpt-5",
+        prompt_version="prompt_v1",
+        workflow_version="workflow_v1",
+        policy_version="policy_v1",
+    )
+
+    assert event["agent_id"] == "agent_001"
+    assert event["agent_version"] == "0.1.0"
+    assert event["model_version"] == "gpt-5"
+    assert event["prompt_version"] == "prompt_v1"
+    assert event["workflow_version"] == "workflow_v1"
+    assert event["policy_version"] == "policy_v1"
+
+def test_log_decision_stores_attribution_fields(tmp_path):
+    log_path = tmp_path / "test_logs.jsonl"
+    ledger = AgentLedger(storage_path=str(log_path))
+
+    event = ledger.log_decision(
+        agent_name="TestAgent",
+        agent_id="agent_001",
+        model_version="gpt-5",
+        policy_version="policy_v1",
+    )
+
+    assert event["agent_id"] == "agent_001"
+    assert event["model_version"] == "gpt-5"
+    assert event["policy_version"] == "policy_v1"
+
+
+def test_log_tool_call_stores_attribution_fields(tmp_path):
+    log_path = tmp_path / "test_logs.jsonl"
+    ledger = AgentLedger(storage_path=str(log_path))
+
+    event = ledger.log_tool_call(
+        agent_name="TestAgent",
+        tool_name="search_api",
+        agent_id="agent_001",
+        model_version="gpt-5",
+        policy_version="policy_v1",
+    )
+
+    assert event["agent_id"] == "agent_001"
+    assert event["model_version"] == "gpt-5"
+    assert event["policy_version"] == "policy_v1"
+
+def test_log_event_adds_hash_fields(tmp_path):
+    log_path = tmp_path / "test_logs.jsonl"
+    ledger = AgentLedger(storage_path=str(log_path))
+
+    event = ledger.log_action(
+        agent_name="TestAgent",
+        action_name="send_email",
+    )
+
+    assert event["prev_hash"] is None
+    assert "sha256" in event
+    assert len(event["sha256"]) == 64
+
+
+def test_log_event_links_to_previous_event_hash(tmp_path):
+    log_path = tmp_path / "test_logs.jsonl"
+    ledger = AgentLedger(storage_path=str(log_path))
+
+    first_event = ledger.log_action(
+        agent_name="TestAgent",
+        action_name="first_action",
+    )
+
+    second_event = ledger.log_action(
+        agent_name="TestAgent",
+        action_name="second_action",
+    )
+
+    assert second_event["prev_hash"] == first_event["sha256"]
+
+def test_verify_hash_chain_returns_valid_for_untampered_log(tmp_path):
+    log_path = tmp_path / "test_logs.jsonl"
+    ledger = AgentLedger(storage_path=str(log_path))
+
+    ledger.log_action(
+        agent_name="TestAgent",
+        action_name="first_action",
+    )
+
+    ledger.log_action(
+        agent_name="TestAgent",
+        action_name="second_action",
+    )
+
+    result = ledger.verify_hash_chain()
+
+    assert result["valid"] is True
+    assert result["total_records"] == 2
+
+def test_verify_hash_chain_detects_tampered_log(tmp_path):
+    log_path = tmp_path / "test_logs.jsonl"
+    ledger = AgentLedger(storage_path=str(log_path))
+
+    ledger.log_action(
+        agent_name="TestAgent",
+        action_name="send_email",
+        output_data={"status": "sent"},
+    )
+
+    records = [
+        json.loads(line)
+        for line in log_path.read_text().splitlines()
+    ]
+
+    records[0]["output_data"] = {"status": "tampered"}
+
+    log_path.write_text(
+        "\n".join(json.dumps(record) for record in records) + "\n"
+    )
+
+    result = ledger.verify_hash_chain()
+
+    assert result["valid"] is False
+    assert result["error"] == "Invalid sha256 at record 0"
+    assert result["index"] == 0
+
+def test_export_markdown_report_includes_audit_fields(tmp_path):
+    log_path = tmp_path / "test_logs.jsonl"
+    export_path = tmp_path / "audit_report.md"
+    ledger = AgentLedger(storage_path=str(log_path))
+
+    ledger.log_action(
+        agent_name="TestAgent",
+        action_name="send_email",
+        action_status="held_for_review",
+        agent_id="agent_001",
+        model_version="gpt-5",
+        policy_version="policy_v1",
+    )
+
+    events = ledger.list_events()
+    ledger.storage.export_markdown_report(events, export_path)
+
+    report = export_path.read_text(encoding="utf-8")
+
+    assert "Action Status" in report
+    assert "held_for_review" in report
+    assert "Agent ID" in report
+    assert "agent_001" in report
+    assert "Model Version" in report
+    assert "gpt-5" in report
+    assert "Policy Version" in report
+    assert "policy_v1" in report
+    assert "SHA256" in report
