@@ -246,8 +246,6 @@ Trace metadata
 + highest risk level
 ```
 
-## Legacy Event Queries and Exports
-
 ## Event Queries, Exports, and Integrity Checks
 
 ```python
@@ -281,12 +279,6 @@ pyproject.toml
 
 ## Current Scope
 
-
-And update **Current Scope** to:
-
-```markdown
-## Current Scope
-
 AgentLedger v0.3.1 is a local-first Python SDK for structured AI-agent accountability records.
 
 Included:
@@ -315,7 +307,7 @@ Not included yet:
 * Compliance certifications
 * Legal or regulatory guarantees
 
-## Roadmap
+### Roadmap
 
 ```text
 v0.3.0 — Trace, risk, review, approval, and audit-export SDK MVP
