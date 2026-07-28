@@ -85,9 +85,14 @@ class JsonlStorage:
         
     
     def replace_all(self, records):
-       with self.path.open("w", encoding="utf-8") as file:
+        previous_hash = None
+
+        with self.path.open("w", encoding="utf-8") as file:
             for record in records:
-             file.write(json.dumps(record) + "\n")
+                record["prev_hash"] = previous_hash
+                record["sha256"] = self.compute_hash(record)
+                file.write(json.dumps(record) + "\n")
+                previous_hash = record["sha256"]
 
     def export_json(self, events, path):
         export_path = Path(path)
