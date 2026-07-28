@@ -154,6 +154,7 @@ class AgentLedger:
         return completed_trace
 
 # Preserves the existing generic event logger while giving decisions events the new audit-review fields
+
     def log_event(
         self,
         event_type,
@@ -170,7 +171,8 @@ class AgentLedger:
         prompt_version=None,
         workflow_version=None,
         policy_version=None,
-    ):
+        extra_fields=None,
+):
         
     
         input_data = input_data or {}
@@ -217,13 +219,18 @@ class AgentLedger:
             "policy_version": policy_version,
         }
 
-        event["prev_hash"] = self.storage.get_last_hash()
-        event["sha256"] = self.storage.compute_hash(event)
+        if extra_fields:
+            event.update(extra_fields)
 
         self.storage.write(event)
         return event
 
-    def log_decision(
+        event["prev_hash"] = self.storage.get_last_hash()
+        event["sha256"] = self.storage.compute_hash(event)
+        self.storage.write(event)
+        return event
+
+    def log_decision(  
         self,
         agent_name,
         input_data=None,
