@@ -58,7 +58,9 @@ class JsonlStorage:
         }
 
     def write(self, event):
+        event["prev_hash"] = self.get_last_hash()
         event["sha256"] = self.compute_hash(event)
+
         with self.path.open("a", encoding="utf-8") as file:
             file.write(json.dumps(event) + "\n")
 
@@ -80,7 +82,7 @@ class JsonlStorage:
                 events.append(json.loads(line))
 
         return events
-    
+        
     
     def replace_all(self, records):
        with self.path.open("w", encoding="utf-8") as file:
