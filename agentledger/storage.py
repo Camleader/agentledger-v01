@@ -62,6 +62,8 @@ class JsonlStorage:
         with self.path.open("a", encoding="utf-8") as file:
             file.write(json.dumps(event) + "\n")
 
+        return event
+
     def read_all(self):
         if not self.path.exists():
             return []
@@ -78,6 +80,7 @@ class JsonlStorage:
                 events.append(json.loads(line))
 
         return events
+    
     
     def replace_all(self, records):
        with self.path.open("w", encoding="utf-8") as file:
