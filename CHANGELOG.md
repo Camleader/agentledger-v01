@@ -2,6 +2,32 @@
 
 All notable changes to AgentLedger are documented in this file.
 
+## [0.3.2] - 2026-08-17
+
+### Added
+
+- Added an official six-event end-to-end underwriting demo with deterministic mock tools.
+- Added repeatable JSON, CSV, Markdown, raw-log, and trace-level demo exports.
+- Added one end-to-end contract test covering event order, exports, repeat runs, workflow completion, and integrity verification.
+- Added a 60-second README path and a “How AgentLedger Works” explanation.
+- Added packaged examples and a `dev` installation extra for pytest.
+- Added regression coverage for decision-event and completed-trace hash-chain integrity.
+
+### Changed
+
+- Rebuilt hash links when records are rewritten and ensured final decision-review fields are hashed before storage.
+- Updated the founder demo walkthrough to match the official v0.3.2 command and output.
+- Aligned active package, SDK, legacy audit-export, app, documentation, and test version references to v0.3.2.
+- Removed generated v0.3.1 validation logs and reports from the tracked source tree.
+
+### Validation
+
+- 61 automated tests passing from the repository checkout.
+- Source distribution and wheel build successfully.
+- 61 automated tests passing from the extracted source distribution.
+- Clean wheel installation reports version `0.3.2`.
+- The packaged end-to-end demo produces six events and valid event and trace hash chains.
+
 ## v0.3.1 - Evidence & Integrity Polish - 2026-07-25
 
 - Added `log_action()` for audit logging real-world agent actions.

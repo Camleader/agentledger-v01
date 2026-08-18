@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "agentledger"
-version = "0.3.0"
+version = "0.3.2"
 description = "A lightweight audit ledger SDK for AI agents."
 readme = "README.md"
 requires-python = ">=3.9"
@@ -15,6 +15,9 @@ authors = [
 ]
 dependencies = []
 
+[project.optional-dependencies]
+dev = ["pytest>=8,<9"]
+
 [tool.setuptools.packages.find]
-include = ["agentledger*"]
+include = ["agentledger*", "examples*"]
 exclude = ["screenshots*"]

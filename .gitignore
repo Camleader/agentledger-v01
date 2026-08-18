@@ -5,14 +5,14 @@ __pycache__/
 .pytest_cache/
 .streamlit/
 .env
-# v0.2.5 Adding Generated Export Filkes - Purpose if for these to be ignored 
+# Generated AgentLedger logs and exports
 
 agentledger_logs.jsonl
+agentledger_traces.jsonl
 audit_events.json
 audit_events.csv
-underwriting_audit_report.mddemo_output/
+underwriting_audit_report.md
 demo_output/
 dist/
 build/
 agentledger.egg-info/
-underwriting_audit_report.md

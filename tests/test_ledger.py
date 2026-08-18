@@ -8,7 +8,7 @@ import agentledger
 from agentledger import AgentLedger
 
 def test_package_exposes_version():
-    assert agentledger.__version__ == "0.3.1"
+    assert agentledger.__version__ == "0.3.2"
 
 def test_package_imports_agentledger_class():
     assert AgentLedger is not None
@@ -535,6 +535,47 @@ def test_verify_hash_chain_returns_valid_for_untampered_log(tmp_path):
 
     assert result["valid"] is True
     assert result["total_records"] == 2
+
+
+def test_verify_hash_chain_returns_valid_for_decision_review_fields(tmp_path):
+    log_path = tmp_path / "test_logs.jsonl"
+    ledger = AgentLedger(storage_path=str(log_path))
+    trace = ledger.create_trace(
+        workflow="heloc_underwriting_validation",
+        agent_name="UnderwritingAgent",
+    )
+
+    ledger.log_action(
+        agent_name="UnderwritingAgent",
+        action_name="request_income_documents",
+        trace_id=trace["trace_id"],
+        action_status="executed",
+    )
+
+    ledger.log_action(
+        agent_name="UnderwritingAgent",
+        action_name="hold_application_for_review",
+        trace_id=trace["trace_id"],
+        action_status="held_for_review",
+    )
+
+    ledger.log_decision(
+        agent_name="UnderwritingAgent",
+        trace_id=trace["trace_id"],
+        output_data={"decision": "manual_review_required"},
+        reason_codes=["INCOME_DOCUMENTATION_INCOMPLETE"],
+        risk_level="high",
+        review_required=True,
+        review_reason="Income documents need human review.",
+        policy_status="warning",
+        approval_status="pending",
+    )
+
+    result = ledger.verify_hash_chain()
+
+    assert result["valid"] is True
+    assert result["total_records"] == 3
+
 
 def test_verify_hash_chain_detects_tampered_log(tmp_path):
     log_path = tmp_path / "test_logs.jsonl"

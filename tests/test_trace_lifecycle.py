@@ -88,3 +88,29 @@ def test_complete_trace_updates_outcome_and_status(tmp_path):
     assert completed_trace["outcome"] == "manual_review_required"
     assert completed_trace["approval_status"] == "pending"
     assert completed_trace["completed_at"] is not None
+
+
+def test_complete_trace_preserves_trace_hash_chain(tmp_path):
+    log_path = tmp_path / "events.jsonl"
+    trace_path = tmp_path / "traces.jsonl"
+
+    ledger = AgentLedger(
+        storage_path=str(log_path),
+        trace_storage_path=str(trace_path),
+    )
+
+    trace = ledger.create_trace(
+        workflow="heloc_underwriting",
+        agent_name="UnderwritingAgent",
+    )
+
+    ledger.complete_trace(
+        trace_id=trace["trace_id"],
+        outcome="manual_review_required",
+        approval_status="pending",
+    )
+
+    result = ledger.trace_storage.verify_hash_chain()
+
+    assert result["valid"] is True
+    assert result["total_records"] == 1
