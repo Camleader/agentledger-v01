@@ -1,53 +1,60 @@
-# AgentLedger v0.1 Founder Demo Script
+# AgentLedger v0.3.2 Founder Demo Script
 
-## One-sentence pitch
+## 10-second positioning
 
-AgentLedger is an audit and approval layer for AI agents operating in regulated workflows.
+AgentLedger is a lightweight evidence layer for AI agents. It records actions, tool calls, decisions, review status, and workflow outcomes, then lets you inspect the records and verify whether they changed.
 
-## 30-second explanation
+## Run the official demo
 
-AI agents are starting to make recommendations and take actions in sensitive workflows like lending, insurance, healthcare, legal, and finance.
+From the repository root with the virtual environment active:
 
-The problem is simple: companies need to prove what the agent did.
+```bash
+python -m examples.end_to_end_agent_demo
+```
 
-AgentLedger captures the agent's inputs, calculations, decision, risk flags, reason codes, human review status, and trace events, then exports everything as a structured audit record.
+## Walkthrough
 
-## Demo setup
+“This is a deterministic HELOC underwriting assistant. The mock agent receives one application, calls three local tools, makes a decision, and routes the case for human review.
 
-This v0.1 demo uses a simulated HELOC underwriting agent.
+AgentLedger is not the underwriting agent. The application calls AgentLedger as the workflow runs so there is an ordered evidence record of what happened.”
 
-The workflow is:
+Point to the terminal summary:
 
-Log → Trace → Flag risk → Explain → Approve → Export
+- Six total events
+- Three tool calls
+- One decision
+- High risk
+- Manual review required
+- Four reason codes
 
-## What I will show
+“The decision is held for review because verified income is below the stated amount, the credit score is below the demo threshold, DTI is high, and CLTV is high. These are evidence fields supplied by the workflow, not conclusions AgentLedger invented.”
 
-First, I can load a clean borrower scenario and run the agent.
+Point to both integrity results:
 
-AgentLedger captures the application data, calculates CLTV and DTI, produces an approval recommendation, explains the decision, and generates an exportable audit record.
+- `hash_check.valid: true` for six event records
+- `trace_hash_check.valid: true` for the completed trace record
 
-Next, I can load a manual review case.
+“The hash chains make later modification detectable. They do not independently prove that the original application data was true.”
 
-Here, the agent identifies higher risk conditions, flags them, explains why manual review is required, and allows a human reviewer to approve or reject the decision.
+## Inspect the output
 
-Finally, I can show the audit export.
+Open one or both of these files:
 
-The export creates a structured JSON record containing the full agent run: product metadata, borrower data, decision summary, calculations, reason codes, risk flags, human review status, and trace events.
+```text
+demo_output/end_to_end_agent/trace_audit_record.json
+demo_output/end_to_end_agent/audit_report.md
+```
 
-## Why this matters
+In the trace record, show:
 
-For AI startups selling into fintech or regulated enterprise customers, trust and compliance are blockers.
+1. The completed workflow status
+2. The `manual_review_required` outcome
+3. The pending approval status
+4. The six ordered events
+5. The summary counts
 
-AgentLedger gives those companies a way to show that their agent decisions are traceable, reviewable, and exportable.
+In the Markdown report, show that the same evidence is readable without custom tooling.
 
-## Current status
+## Close
 
-AgentLedger v0.1 is a local prototype.
-
-It does not include authentication, database storage, external APIs, or production compliance guarantees yet.
-
-The current goal is to validate the core workflow and show why agent auditability matters.
-
-## Next version
-
-v0.2 will focus on turning AgentLedger into a developer SDK so builders can add audit logging to their own agents with simple Python commands.
+“AgentLedger gives developers a small, framework-agnostic way to capture inspectable evidence around agent behavior. It does not replace the agent, enforce policy, or certify compliance. v0.3.2 focuses on making that value understandable and runnable in about a minute.”

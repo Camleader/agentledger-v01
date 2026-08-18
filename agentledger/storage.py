@@ -1,6 +1,5 @@
-# Adding in the ability to read JSONL Logs 
-
 import csv
+import hashlib
 import json
 from pathlib import Path
 
@@ -58,9 +57,13 @@ class JsonlStorage:
         }
 
     def write(self, event):
+        event["prev_hash"] = self.get_last_hash()
         event["sha256"] = self.compute_hash(event)
+
         with self.path.open("a", encoding="utf-8") as file:
             file.write(json.dumps(event) + "\n")
+
+        return event
 
     def read_all(self):
         if not self.path.exists():
@@ -80,9 +83,14 @@ class JsonlStorage:
         return events
     
     def replace_all(self, records):
-       with self.path.open("w", encoding="utf-8") as file:
+        previous_hash = None
+
+        with self.path.open("w", encoding="utf-8") as file:
             for record in records:
-             file.write(json.dumps(record) + "\n")
+                record["prev_hash"] = previous_hash
+                record["sha256"] = self.compute_hash(record)
+                file.write(json.dumps(record) + "\n")
+                previous_hash = record["sha256"]
 
     def export_json(self, events, path):
         export_path = Path(path)
@@ -201,8 +209,3 @@ class JsonlStorage:
         export_path.write_text("\n".join(lines), encoding="utf-8")
 
         return export_path
-    
-import hashlib
-    
-
-

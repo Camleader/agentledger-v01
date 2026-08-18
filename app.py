@@ -14,7 +14,7 @@ from agentledger.risk_flags import (
 
 
 PRODUCT_NAME = "AgentLedger"
-PRODUCT_VERSION = "v0.1.4"
+PRODUCT_VERSION = "v0.3.2"
 AGENT_NAME = "HELOC Underwriting Agent"
 WORKFLOW = "Log → Trace → Flag risk → Explain → Approve → Export"
 EMPLOYMENT_OPTIONS = ["W2", "Self-employed", "Retired"]

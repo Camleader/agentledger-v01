@@ -153,8 +153,6 @@ class AgentLedger:
         self.trace_storage.replace_all(traces)
         return completed_trace
 
-# Preserves the existing generic event logger while giving decisions events the new audit-review fields
-
     def log_event(
         self,
         event_type,
@@ -172,9 +170,7 @@ class AgentLedger:
         workflow_version=None,
         policy_version=None,
         extra_fields=None,
-):
-        
-    
+    ):
         input_data = input_data or {}
         output_data = output_data or {}
         reason_codes = reason_codes or []
@@ -222,15 +218,9 @@ class AgentLedger:
         if extra_fields:
             event.update(extra_fields)
 
-        self.storage.write(event)
-        return event
+        return self.storage.write(event)
 
-        event["prev_hash"] = self.storage.get_last_hash()
-        event["sha256"] = self.storage.compute_hash(event)
-        self.storage.write(event)
-        return event
-
-    def log_decision(  
+    def log_decision(
         self,
         agent_name,
         input_data=None,
@@ -269,7 +259,7 @@ class AgentLedger:
             ALLOWED_APPROVAL_STATUSES,
         )
 
-        event = self.log_event(
+        return self.log_event(
             event_type="decision",
             agent_name=agent_name,
             input_data=input_data,
@@ -284,19 +274,14 @@ class AgentLedger:
             prompt_version=prompt_version,
             workflow_version=workflow_version,
             policy_version=policy_version,
+            extra_fields={
+                "risk_level": risk_level,
+                "review_required": review_required,
+                "review_reason": review_reason,
+                "policy_status": policy_status,
+                "approval_status": approval_status,
+            },
         )
-
-        event["risk_level"] = risk_level
-        event["review_required"] = review_required
-        event["review_reason"] = review_reason
-        event["policy_status"] = policy_status
-        event["approval_status"] = approval_status
-
-        events = self.storage.read_all()
-        events[-1] = event
-        self.storage.replace_all(events)
-
-        return event
 
     def log_tool_call(
         self,
